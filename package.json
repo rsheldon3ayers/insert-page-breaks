@@ -13,7 +13,6 @@
     "commander": "^2.11.0",
     "lodash.escaperegexp": "^4.1.2",
     "natural": "^0.5.4",
-    "pdf2json": "^1.1.7",
-    "xml2js": "^0.4.19"
+    "pdf2json": "^1.1.7"
   }
 }
