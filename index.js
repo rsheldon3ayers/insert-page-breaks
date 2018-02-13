@@ -1,15 +1,21 @@
 "use strict";
 const path = require('path');
 const fs = require("fs");
-let escapeRegExp = require('lodash.escaperegexp');
+const fse = require('fs-extra')
 const cheerio = require('cheerio');
-let natural = require('natural');
+const natural = require('natural');
 const list = require("./lib/unfoldList");
-let dir = './lib/project'
 const lib = path.resolve('./', 'lib');
 const project = path.resolve(lib, 'project');
+let isbn = '9781535922791'
+let pdf = `./pdfs/${isbn}/`
+let dir = `../../EPUB Projects/DefenseDoctrine/dev/epub/${isbn}/OEBPS/text`
 
-let files = fs.readdirSync(project)
+const isDirectory = source => fs.lstatSync(source).isDirectory()
+const getDirectories = source =>
+    fs.readdirSync(source).map(name => path.join(source, name)).filter(isDirectory)
+let html;
+let files = fs.readdirSync(dir)
 
 files.forEach(file => {
     let html = fs.readFileSync(path.join(dir, file), 'utf-8')
@@ -25,9 +31,10 @@ function insertPageBreaks(html, fileName) {
 
     let highestScore = 0;
     let finalNode;
+
     list.firstSentences.forEach((testString) => {
 
-        $('span,p,h\d+').filter(function () {
+        $('span,p,h\d+,li').filter(function () {
 
             if (formatStrings($(this).text()).match(new RegExp(formatStrings(testString), "gi"))) {
 
@@ -39,6 +46,7 @@ function insertPageBreaks(html, fileName) {
     })
 
     function writePageBreak(pageBreakLoc, testString) {
+
         let isAtextNode = 3;
 
         let textNodes = pageBreakLoc.contents().filter(function () {
@@ -82,42 +90,47 @@ function insertPageBreaks(html, fileName) {
 
         let pageNumIndex = list.firstSentences.indexOf(testString);
         let pageIndex = pageBreakLoc.html().indexOf(testString);
-
+        let placeNum = `${list.pageNumbers[pageNumIndex]}`;
         let nodeString = [];
-        if (pageBreakLoc.html().indexOf(`${list.pageNumbers[pageNumIndex]}`) > -1) {
-            return;
+        if (pageBreakLoc.html().indexOf(`${placeNum}`) > -1) {
+            console.log(pageBreakLoc.html().indexOf(`${placeNum}`), `${fileName}`)
+            return false;
         } else {
+            console.log(`placing into ${fileName}`)
             let nodeString = [];
+
             if (finalNode.data.indexOf(testString) > -1) {
-                nodeString = [finalNode.data.slice(0, finalNode.data.indexOf(testString)), ` ${list.pageNumbers[pageNumIndex]}`, finalNode.data.slice(finalNode.data.indexOf(testString))].join('')
+                nodeString = [finalNode.data.slice(0, finalNode.data.indexOf(testString)), ` ${placeNum}`, finalNode.data.slice(finalNode.data.indexOf(testString))].join('')
                 finalNode.data = nodeString;
             } else if (testString.indexOf(finalNode.data) > -1) {
 
-                let finalString = [pageBreakLoc.html().slice(0, pageIndex), ` ${list.pageNumbers[pageNumIndex]}`, pageBreakLoc.html().slice(pageIndex)].join('');
+                let finalString = [pageBreakLoc.html().slice(0, pageIndex), ` ${placeNum}`, pageBreakLoc.html().slice(pageIndex)].join('');
 
                 pageBreakLoc.html(finalString);
             } else {
 
                 if (pageBreakLoc.html().match(formatStrings(testString)) > -1) {
 
-                    let finalString = [pageBreakLoc.html().slice(0, pageIndex), ` ${list.pageNumbers[pageNumIndex]}`, pageBreakLoc.html().slice(pageIndex)].join('');
+                    let finalString = [pageBreakLoc.html().slice(0, pageIndex), `${placeNum}`, pageBreakLoc.html().slice(pageIndex)].join('');
 
                     pageBreakLoc.html(finalString);
 
                 }
             }
         }
+
         let newHTML = $.html();
 
-        fs.writeFileSync(`./lib/project/${fileName}`, newHTML, {
+        fs.writeFileSync(`${pdf}/finish/${fileName}`, newHTML, {
             encoding: 'utf8'
         });
     }
 
 
     function formatStrings(str) {
-        str = str.replace(/(\(|\?|\)|\“|\”|~|`|\[|\]|!|@|#|\$|%|\^|–|&|\*|\(|\)|\)|\{|\}|\[|\]|;|:|\"|’|<|,|\.|>|\?|\/|\\|\||-|_|\+|=)/g, "")
+        str = str.replace(/(\(|\?|\)|\“|\”|~|`|\[|\]|!|@|#|\$|%|\^|–|&|\*|\(|\)|\)|\{|\}|\[|\]|;|:|\"|’|<|,|\.|>|\?|\/|\\|\||-|_|\+|=|\s)/g, "")
 
         return str;
     }
 }
+fse.emptyDir('./sanitized')

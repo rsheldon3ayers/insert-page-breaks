@@ -4,15 +4,28 @@
   "description": "a node script to insert epub page breaks into an xhtml file",
   "main": "index.js",
   "scripts": {
+    "parse": "node parsePDF.js",
+    "insert": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Bobby Ayers",
+  "bin": {
+    "parsepages": "./parsePDF.js"
+  },
   "license": "ISC",
   "dependencies": {
+    "check-word": "^1.1.0",
     "cheerio": "^1.0.0-rc.2",
     "commander": "^2.11.0",
+    "compromise": "^11.2.1",
+    "fs-extra": "^5.0.0",
+    "he": "^1.1.1",
+    "himalaya": "^0.2.10",
     "lodash.escaperegexp": "^4.1.2",
     "natural": "^0.5.4",
-    "pdf2json": "^1.1.7"
+    "pdf2json": "^1.1.7",
+    "pdfjs-dist": "^2.0.203",
+    "pdftohtmljs": "^0.4.2",
+    "tesseract.js": "^1.0.10"
   }
 }
