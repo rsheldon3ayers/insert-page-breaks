@@ -60,3 +60,4 @@ typings/
 #script deps
 pdfs/
 test/
+.vscode
